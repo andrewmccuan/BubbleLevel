@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
     float x = 0;
     float lr = 0;
     float ud = 0;
+    int type = 1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -50,15 +51,44 @@ public class MainActivity extends AppCompatActivity {
         }
 
         protected void onDraw(Canvas canvas) {
-            degText(canvas);
+            if (type == 0) {
+                degText(canvas);
 
-            canvas.translate(0, -350);
-            canvas.rotate(deg + 0, width/2, height/2);
-            level(canvas);
-            canvas.rotate(-deg + 0, width/2, height/2);
-            canvas.translate(0, 350);
-
+                canvas.translate(0, -350);
+                canvas.rotate(deg + 0, width / 2, height / 2);
+                straightLevel(canvas);
+                canvas.rotate(-deg + 0, width / 2, height / 2);
+                canvas.translate(0, 350);
+            } else if(type == 1) {
+                canvas.translate(0, -350);
+                surfaceLevel(canvas);
+                canvas.translate(0, 350);
+            }
             buttons(canvas);
+        }
+        protected void surfaceLevel(Canvas canvas) {
+            //Red border
+            paint.setColor(Color.rgb(255, 0, 0));
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawCircle(width/2, height/2, 500, paint);
+            //Green background
+            paint.setColor(Color.rgb(0, 255, 0));
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawCircle(width/2, height/2, 490, paint);
+            //Bubble
+            canvas.translate(0, 0);
+            fullBubble(canvas);
+            canvas.translate(-0, -0);
+            //Outer marker
+            paint.setColor(Color.rgb(0, 0, 0));
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(10);
+            canvas.drawCircle(width/2, height/2, 250, paint);
+            //Inner marker
+            paint.setColor(Color.rgb(0, 0, 0));
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(10);
+            canvas.drawCircle(width/2, height/2, 100, paint);
         }
 
         protected void degText(Canvas canvas) {
@@ -71,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
                 canvas.drawText(String.valueOf(deg) + "°", width - 450, 250, paint);
         }
 
-        protected void level(Canvas canvas) {
+        protected void straightLevel(Canvas canvas) {
             //Red border
             paint.setColor(Color.rgb(255, 0, 0));
             paint.setStyle(Paint.Style.FILL);
@@ -84,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
 
             //Bubble call
             canvas.translate(lr + 0, ud + 0);
-            bubble(canvas);
+            halfBubble(canvas);
             canvas.translate(-lr + 0, -ud + 0);
 
             //Left marker
@@ -99,7 +129,17 @@ public class MainActivity extends AppCompatActivity {
             //Log.d("pixel", String.valueOf((width/2 - 660/3) - (width/2 - 660)));
         }
 
-        protected void bubble(Canvas canvas) {
+        protected  void fullBubble(Canvas canvas) {
+            //Bubble outside
+            paint.setColor(Color.rgb(0, 100, 0));
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawCircle(width/2, height/2, 160, paint);
+            //Bubble inside
+            paint.setColor(Color.rgb(150, 255, 150));
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawCircle(width/2, height/2, 150, paint);
+        }
+        protected void halfBubble(Canvas canvas) {
             //Outer arc
             paint.setColor(Color.rgb(0, 100, 0));
             paint.setStyle(Paint.Style.FILL);
@@ -112,28 +152,47 @@ public class MainActivity extends AppCompatActivity {
         }
 
         protected void buttons(Canvas canvas) {
-            //Left button
-            paint.setColor(Color.rgb(0, 200, 255));
-            paint.setStyle(Paint.Style.FILL);
-            paint.setTextSize(150);
-            canvas.drawRoundRect(20, height - 525, width/3 - 20, height - 300, 75, 75, paint);
-            paint.setColor(Color.rgb(0, 0, 0));
-            canvas.drawText("Tare", 80, height - 360, paint);
+            if (type == 0) {
+                //Straight level
+                //Tare button
+                paint.setColor(Color.rgb(0, 200, 255));
+                paint.setStyle(Paint.Style.FILL);
+                paint.setTextSize(150);
+                canvas.drawRoundRect(20, height - 525, width / 3 - 20, height - 300, 75, 75, paint);
+                paint.setColor(Color.rgb(0, 0, 0));
+                canvas.drawText("Tare", 80, height - 360, paint);
 
-            //Center button
-            paint.setColor(Color.rgb(0, 200, 255));
-            paint.setStyle(Paint.Style.FILL);
-            canvas.drawRoundRect(width/3 + 20, height - 525, width - (width/3) - 20, height - 300, 75, 75, paint);
-            paint.setColor(Color.rgb(0, 0, 0));
-            canvas.drawText("Type", width/2 - 160, height - 360, paint);
+                //Type button
+                paint.setColor(Color.rgb(0, 200, 255));
+                paint.setStyle(Paint.Style.FILL);
+                canvas.drawRoundRect(width / 3 + 20, height - 525, width - (width / 3) - 20, height - 300, 75, 75, paint);
+                paint.setColor(Color.rgb(0, 0, 0));
+                canvas.drawText("Type", width / 2 - 160, height - 360, paint);
 
-            //Right button
-            paint.setColor(Color.rgb(0, 200, 255));
-            paint.setStyle(Paint.Style.FILL);
-            paint.setTextSize(125);
-            canvas.drawRoundRect(width - (width/3) + 20, height - 525, width - 20, height - 300, 75, 75, paint);
-            paint.setColor(Color.rgb(0, 0, 0));
-            canvas.drawText("Rotate", width/2 + 300, height - 360, paint);
+                //Rotate button
+                paint.setColor(Color.rgb(0, 200, 255));
+                paint.setStyle(Paint.Style.FILL);
+                paint.setTextSize(125);
+                canvas.drawRoundRect(width - (width / 3) + 20, height - 525, width - 20, height - 300, 75, 75, paint);
+                paint.setColor(Color.rgb(0, 0, 0));
+                canvas.drawText("Rotate", width / 2 + 300, height - 360, paint);
+            } else if (type == 1) {
+                //Surface level
+                //Tare button
+                paint.setColor(Color.rgb(0, 200, 255));
+                paint.setStyle(Paint.Style.FILL);
+                paint.setTextSize(150);
+                canvas.drawRoundRect(width/4 - 220, height - 525, width/4 + 220, height - 300, 75, 75, paint);
+                paint.setColor(Color.rgb(0, 0, 0));
+                canvas.drawText("Tare", width/4 - 150, height - 360, paint);
+
+                //Type button
+                paint.setColor(Color.rgb(0, 200, 255));
+                paint.setStyle(Paint.Style.FILL);
+                canvas.drawRoundRect(width/4*3 - 220, height - 525, (width/4)*3 + 220, height - 300, 75, 75, paint);
+                paint.setColor(Color.rgb(0, 0, 0));
+                canvas.drawText("Type", width/4*3 - 150, height - 360, paint);
+            }
         }
 
         public boolean onTouchEvent(MotionEvent event) {
@@ -150,19 +209,58 @@ public class MainActivity extends AppCompatActivity {
 
             switch (maskedAction) {
                 case MotionEvent.ACTION_DOWN: {
-                    if (x > width - (width/3) + 20 && x < width - 20 && y > height - 525 && y < height - 300) {
-                        switch (deg) {
-                            case 0: {
-                                deg = 45;
-                                break;
+                    if (type == 0) {
+                        //Tare button
+                        if (x > 20 && x < width / 3 - 20 && y > height - 525 && y < height - 300) {
+
+                        }
+                        //Type button
+                        if (x > width / 3 + 20 && x < width - (width / 3) - 20 && y > height - 525 && y < height - 300) {
+                            switch (type) {
+                                case 0: {
+                                    type = 1;
+                                    break;
+                                }
+                                case 1: {
+                                    type = 0;
+                                    break;
+                                }
                             }
-                            case 45: {
-                                deg = 90;
-                                break;
+                        }
+                        //Rotate button
+                        if (x > width - (width / 3) + 20 && x < width - 20 && y > height - 525 && y < height - 300) {
+                            switch (deg) {
+                                case 0: {
+                                    deg = 45;
+                                    break;
+                                }
+                                case 45: {
+                                    deg = 90;
+                                    break;
+                                }
+                                case 90: {
+                                    deg = 0;
+                                    break;
+                                }
                             }
-                            case 90: {
-                                deg = 0;
-                                break;
+                        }
+                    }
+                    if (type == 1) {
+                        //Tare button
+                        if (x > width/4 - 220 && x < width/4 + 220 && y > height - 525 && y < height - 300) {
+
+                        }
+                        //Type button
+                        if (x > width/4*3 - 220 && x < (width/4)*3 + 220 && y > height - 525 && y < height - 300) {
+                            switch (type) {
+                                case 0: {
+                                    type = 1;
+                                    break;
+                                }
+                                case 1: {
+                                    type = 0;
+                                    break;
+                                }
                             }
                         }
                     }
