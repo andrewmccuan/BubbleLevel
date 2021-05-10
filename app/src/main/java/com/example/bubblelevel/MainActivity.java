@@ -6,6 +6,10 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -15,14 +19,21 @@ import android.view.View;
 
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SensorEventListener{
     int height = 0;
     int width = 0;
     int deg = 0;
-    float x = 0;
-    float lr = 0;
-    float ud = 0;
+    int sensitivity = 45;
+    float offsetX = 0;
+    float offsetY = 0;
     int type = 1;
+    float lHead = 0;
+    float lPitch = 0;
+    float lRoll = 0;
+    float newX = 0;
+    float newY = 0;
+    private SensorManager lSensorManager;
+    private Sensor lOrientation;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -30,10 +41,34 @@ public class MainActivity extends AppCompatActivity {
         height = displayMetrics.heightPixels;
         width = displayMetrics.widthPixels;
         super.onCreate(savedInstanceState);
-        //(R.layout.activity_main);
         myView v;
         v = new myView(this);
         setContentView(v);
+        lSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        lOrientation = lSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+        lSensorManager.registerListener( this, lOrientation, SensorManager.SENSOR_DELAY_FASTEST);
+    }
+
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ORIENTATION) {
+            lHead = event.values[0];
+            lPitch = event.values[1];
+            lRoll = event.values[2] - deg;
+        }
+        //Log.d("angles", String.valueOf(lRoll));
+    }
+    public void onResume() {
+        super.onResume();
+        lSensorManager.registerListener( this, lOrientation, SensorManager.SENSOR_DELAY_FASTEST);
+    }
+
+    public void onPause() {
+        super.onPause();
+        lSensorManager.unregisterListener( this);
     }
 
     class myView extends View {
@@ -65,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
                 canvas.translate(0, 350);
             }
             buttons(canvas);
+            invalidate();
         }
         protected void surfaceLevel(Canvas canvas) {
             //Red border
@@ -75,10 +111,34 @@ public class MainActivity extends AppCompatActivity {
             paint.setColor(Color.rgb(0, 255, 0));
             paint.setStyle(Paint.Style.FILL);
             canvas.drawCircle(width/2, height/2, 490, paint);
+
             //Bubble
-            canvas.translate(0, 0);
+            float rS = (float) (Math.pow((lRoll - offsetX) * sensitivity, 2) + Math.pow((lPitch - offsetY) * sensitivity, 2));
+            rS = (float) Math.sqrt(rS);
+            //Log.d("rS", String.valueOf(rS));
+
+            if (rS >= 330) {
+                float adjust = 330/rS;
+                newX = ((lRoll - offsetX) * sensitivity) * adjust;
+                newY = ((lPitch - offsetY) * sensitivity) * adjust;
+                //Log.d("rS", "X: " + String.valueOf(newX));
+                //Log.d("rS", "Y: " + String.valueOf(newY));
+            } else {
+                newX = (lRoll - offsetX) * sensitivity;
+                newY = (lPitch - offsetY) * sensitivity;
+            }
+            canvas.translate(newX, newY);
             fullBubble(canvas);
-            canvas.translate(-0, -0);
+            if (rS >= 330) {
+                float adjust = 330/rS;
+                newX = ((lRoll - offsetX) * sensitivity) * adjust;
+                newY = ((lPitch - offsetY) * sensitivity) * adjust;
+            } else {
+                newX = (lRoll - offsetX) * sensitivity;
+                newY = (lPitch - offsetY) * sensitivity;
+            }
+            canvas.translate(-newX, -newY);
+
             //Outer marker
             paint.setColor(Color.rgb(0, 0, 0));
             paint.setStyle(Paint.Style.STROKE);
@@ -113,9 +173,19 @@ public class MainActivity extends AppCompatActivity {
             canvas.drawRect(width/2 - 660, height/2 - 115, width/2 + 660, height/2 + 115, paint);
 
             //Bubble call
-            canvas.translate(lr + 0, ud + 0);
+            if ((lRoll - offsetX) * sensitivity <= -445)
+                canvas.translate(-445, 0);
+            else if ((lRoll - offsetX) * sensitivity >= 445)
+                canvas.translate(445, 0);
+            else
+                canvas.translate((lRoll - offsetX) * sensitivity, 0);
             halfBubble(canvas);
-            canvas.translate(-lr + 0, -ud + 0);
+            if ((lRoll - offsetX) * sensitivity <= -445)
+                canvas.translate(445, 0);
+            else if ((lRoll - offsetX)  * sensitivity >= 445)
+                canvas.translate(-445, 0);
+            else
+                canvas.translate(-(lRoll - offsetX) * sensitivity, 0);
 
             //Left marker
             paint.setColor(Color.rgb(0, 0, 0));
@@ -201,9 +271,6 @@ public class MainActivity extends AppCompatActivity {
             float x = event.getX();
             float y = event.getY();
 
-            // get pointer ID
-            int pointerId = event.getPointerId(pointerIndex);
-
             // get masked (not specific to a pointer) action
             int maskedAction = event.getActionMasked();
 
@@ -212,17 +279,24 @@ public class MainActivity extends AppCompatActivity {
                     if (type == 0) {
                         //Tare button
                         if (x > 20 && x < width / 3 - 20 && y > height - 525 && y < height - 300) {
-
+                            offsetX = lRoll;
+                            //Log.d("offset", String.valueOf(offsetX));
                         }
                         //Type button
                         if (x > width / 3 + 20 && x < width - (width / 3) - 20 && y > height - 525 && y < height - 300) {
                             switch (type) {
                                 case 0: {
                                     type = 1;
+                                    deg = 0;
+                                    offsetX = 0;
+                                    offsetY = 0;
                                     break;
                                 }
                                 case 1: {
                                     type = 0;
+                                    deg = 0;
+                                    offsetX = 0;
+                                    offsetY = 0;
                                     break;
                                 }
                             }
@@ -232,14 +306,14 @@ public class MainActivity extends AppCompatActivity {
                             switch (deg) {
                                 case 0: {
                                     deg = 45;
+                                    offsetX = 0;
+                                    offsetY = 0;
                                     break;
                                 }
                                 case 45: {
-                                    deg = 90;
-                                    break;
-                                }
-                                case 90: {
                                     deg = 0;
+                                    offsetX = 0;
+                                    offsetY = 0;
                                     break;
                                 }
                             }
@@ -248,17 +322,25 @@ public class MainActivity extends AppCompatActivity {
                     if (type == 1) {
                         //Tare button
                         if (x > width/4 - 220 && x < width/4 + 220 && y > height - 525 && y < height - 300) {
-
+                            offsetX = lRoll;
+                            offsetY = lPitch;
+                            //Log.d("offset", String.valueOf(offsetX));
                         }
                         //Type button
                         if (x > width/4*3 - 220 && x < (width/4)*3 + 220 && y > height - 525 && y < height - 300) {
                             switch (type) {
                                 case 0: {
                                     type = 1;
+                                    deg = 0;
+                                    offsetX = 0;
+                                    offsetY = 0;
                                     break;
                                 }
                                 case 1: {
                                     type = 0;
+                                    deg = 0;
+                                    offsetX = 0;
+                                    offsetY = 0;
                                     break;
                                 }
                             }
